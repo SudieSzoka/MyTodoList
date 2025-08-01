@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的 TODO List</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>我的 TODO List</h1>
+      <button id="sync-btn">同步到 GitHub</button>
+      <p id="sync-status"></p>
+    </header>
+    <nav class="tabs">
+      <button id="tab-active" class="tab active">进行中</button>
+      <button id="tab-completed" class="tab">已完成</button>
+    </nav>
+    <main>
+      <section id="todo-list"></section>
+      <section id="add-todo">
+        <input type="text" id="new-todo-title" placeholder="添加新任务...">
+        <select id="new-todo-priority">
+          <option value="medium" selected>中</option>
+          <option value="high">高</option>
+          <option value="low">低</option>
+        </select>
+        <input type="text" id="new-todo-desc" placeholder="备注（可选）">
+        <button id="add-todo-btn">添加</button>
+      </section>
+    </main>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>
