@@ -388,9 +388,8 @@ const GITHUB_CONFIG = {
   // 请替换为你的 GitHub 用户名和仓库名
   owner: 'SudieSzoka', // 替换为你的 GitHub 用户名
   repo: 'MyTodoList',     // 替换为你的仓库名
-  // 请替换为你的 GitHub Personal Access Token
-  // 注意：这种方式会将 token 暴露在前端，请谨慎使用
-  token: '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' // 替换为你的 GitHub Token
+  // Token 现在通过用户界面输入，不再硬编码
+  token: '' // 这个值会被用户输入的token替代
 };
 
 // 同步到 GitHub
@@ -407,17 +406,28 @@ async function syncToGitHub() {
     // 保存到 localStorage
     saveTodos();
     
+    // 获取用户输入的token
+    const userToken = document.getElementById('github-token').value.trim();
+    if (!userToken || userToken === 'ghp_xxx') {
+      throw new Error('请输入有效的 GitHub Token');
+    }
+    
+    // 创建临时的配置对象，使用用户输入的token
+    const tempConfig = {
+      ...GITHUB_CONFIG,
+      token: userToken
+    };
+    
     // 检查配置
-    if (GITHUB_CONFIG.token === 'your-github-token-here' || 
-        GITHUB_CONFIG.owner === 'your-username') {
-      throw new Error('请先配置 GitHub Token 和仓库信息');
+    if (tempConfig.owner === 'your-username') {
+      throw new Error('请先配置 GitHub 仓库信息');
     }
     
     const dataStr = JSON.stringify(todos, null, 2);
     
     // 方法1：直接更新 todo.json 文件
     try {
-      await updateTodoFile(dataStr);
+      await updateTodoFile(dataStr, tempConfig);
       syncStatus.textContent = '同步成功！数据已更新到 GitHub';
       syncStatus.style.color = '#28a745';
       return;
@@ -427,7 +437,7 @@ async function syncToGitHub() {
     
     // 方法2：触发 GitHub Action
     try {
-      await triggerGitHubAction(dataStr);
+      await triggerGitHubAction(dataStr, tempConfig);
       syncStatus.textContent = '同步成功！GitHub Action 已触发';
       syncStatus.style.color = '#28a745';
       return;
@@ -454,13 +464,13 @@ async function syncToGitHub() {
 }
 
 // 直接更新 todo.json 文件
-async function updateTodoFile(content) {
-  const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/todo.json`;
+async function updateTodoFile(content, config = GITHUB_CONFIG) {
+  const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/todo.json`;
   
   // 首先获取文件的 SHA
   const getResponse = await fetch(url, {
     headers: {
-      'Authorization': `token ${GITHUB_CONFIG.token}`,
+      'Authorization': `token ${config.token}`,
       'Accept': 'application/vnd.github.v3+json'
     }
   });
@@ -475,7 +485,7 @@ async function updateTodoFile(content) {
   const updateResponse = await fetch(url, {
     method: 'PUT',
     headers: {
-      'Authorization': `token ${GITHUB_CONFIG.token}`,
+      'Authorization': `token ${config.token}`,
       'Content-Type': 'application/json',
       'Accept': 'application/vnd.github.v3+json'
     },
@@ -495,13 +505,13 @@ async function updateTodoFile(content) {
 }
 
 // 触发 GitHub Action
-async function triggerGitHubAction(content) {
-  const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/dispatches`;
+async function triggerGitHubAction(content, config = GITHUB_CONFIG) {
+  const url = `https://api.github.com/repos/${config.owner}/${config.repo}/dispatches`;
   
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Authorization': `token ${GITHUB_CONFIG.token}`,
+      'Authorization': `token ${config.token}`,
       'Content-Type': 'application/json',
       'Accept': 'application/vnd.github.v3+json'
     },
@@ -654,6 +664,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadCollapseState();
   setupAddTodo();
   setupTabs();
+  setupGitHubToken();
   render();
   
   // 设置同步按钮
@@ -667,6 +678,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     syncStatus.textContent = '';
   }, 2000);
 });
+
+// 设置 GitHub Token 相关功能
+function setupGitHubToken() {
+  const tokenInput = document.getElementById('github-token');
+  const clearBtn = document.getElementById('clear-token-btn');
+  
+  // 从 localStorage 加载保存的 token
+  const savedToken = localStorage.getItem('github_token');
+  if (savedToken && savedToken !== 'ghp_xxx') {
+    tokenInput.value = savedToken;
+  }
+  
+  // 当用户输入 token 时自动保存
+  tokenInput.addEventListener('input', () => {
+    const token = tokenInput.value.trim();
+    if (token && token !== 'ghp_xxx') {
+      localStorage.setItem('github_token', token);
+    } else {
+      localStorage.removeItem('github_token');
+    }
+  });
+  
+  // 清除按钮功能
+  clearBtn.addEventListener('click', () => {
+    tokenInput.value = 'ghp_xxx';
+    localStorage.removeItem('github_token');
+    tokenInput.focus();
+  });
+  
+  // 键盘快捷键：ESC 清除
+  tokenInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      tokenInput.value = 'ghp_xxx';
+      localStorage.removeItem('github_token');
+    }
+  });
+}
 
 function showAddChildForm(todo, item, level) {
   // 只允许一个表单

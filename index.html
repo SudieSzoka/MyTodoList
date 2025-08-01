@@ -11,7 +11,17 @@
   <div class="container">
     <header>
       <h1>我的 TODO List</h1>
-      <button id="sync-btn">同步到 GitHub</button>
+      <div class="github-config">
+        <div class="token-input-group">
+          <label for="github-token">GitHub Token:</label>
+          <div class="token-input-wrapper">
+            <input type="password" id="github-token" placeholder="ghp_xxx" value="ghp_xxx">
+            <button type="button" id="clear-token-btn" title="清除Token">×</button>
+          </div>
+          <small>用于同步数据到GitHub，格式：ghp_xxx</small>
+        </div>
+        <button id="sync-btn">同步到 GitHub</button>
+      </div>
       <p id="sync-status"></p>
     </header>
     <nav class="tabs">
