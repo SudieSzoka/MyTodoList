@@ -25,6 +25,15 @@ jobs:
       with:
         node-version: '18'
         
+    - name: Handle repository dispatch
+      if: github.event_name == 'repository_dispatch'
+      run: |
+        echo "Processing repository dispatch event"
+        if [ "${{ github.event.client_payload.todo_data }}" != "" ]; then
+          echo "${{ github.event.client_payload.todo_data }}" > todo.json
+          echo "Todo data updated from web app"
+        fi
+        
     - name: Validate JSON
       run: |
         if [ -f todo.json ]; then
@@ -42,7 +51,7 @@ jobs:
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Auto-sync todo data [skip ci]"
+          git commit -m "Auto-sync todo data from web app [skip ci]"
           git push
         fi
         

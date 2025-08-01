@@ -383,6 +383,16 @@ function setupTabs() {
   };
 }
 
+// GitHub 配置
+const GITHUB_CONFIG = {
+  // 请替换为你的 GitHub 用户名和仓库名
+  owner: 'SudieSzoka', // 替换为你的 GitHub 用户名
+  repo: 'MyTodoList',     // 替换为你的仓库名
+  // 请替换为你的 GitHub Personal Access Token
+  // 注意：这种方式会将 token 暴露在前端，请谨慎使用
+  token: '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' // 替换为你的 GitHub Token
+};
+
 // 同步到 GitHub
 async function syncToGitHub() {
   const syncBtn = document.getElementById('sync-btn');
@@ -397,134 +407,36 @@ async function syncToGitHub() {
     // 保存到 localStorage
     saveTodos();
     
-    // 使用 GitHub API 推送数据
+    // 检查配置
+    if (GITHUB_CONFIG.token === 'your-github-token-here' || 
+        GITHUB_CONFIG.owner === 'your-username') {
+      throw new Error('请先配置 GitHub Token 和仓库信息');
+    }
+    
     const dataStr = JSON.stringify(todos, null, 2);
     
-    // 创建下载链接，让用户手动下载并上传到 GitHub
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = 'todo.json';
-    downloadLink.style.display = 'none';
-    document.body.appendChild(downloadLink);
-    
-    // 显示同步对话框
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    `;
-    
-    const content = document.createElement('div');
-    content.style.cssText = `
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 90%;
-      max-height: 90%;
-      overflow: auto;
-    `;
-    
-    content.innerHTML = `
-      <h3>同步到 GitHub</h3>
-      <p>请选择以下任一方式同步数据：</p>
-      <div style="margin: 15px 0;">
-        <button id="download-btn" style="
-          padding: 10px 20px;
-          background: #28a745;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          margin-right: 10px;
-        ">📥 下载 todo.json</button>
-        <button id="copy-btn" style="
-          padding: 10px 20px;
-          background: #007bff;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        ">📋 复制数据</button>
-      </div>
-      <div style="margin: 15px 0;">
-        <h4>同步步骤：</h4>
-        <ol>
-          <li>下载或复制数据</li>
-          <li>打开 GitHub 仓库</li>
-          <li>编辑 todo.json 文件</li>
-          <li>粘贴数据并保存</li>
-          <li>GitHub Action 会自动触发同步</li>
-        </ol>
-      </div>
-      <p><strong>数据预览：</strong></p>
-    `;
-    
-    const textArea = document.createElement('textarea');
-    textArea.value = dataStr;
-    textArea.style.cssText = `
-      width: 100%;
-      height: 200px;
-      font-family: monospace;
-      font-size: 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      padding: 8px;
-      margin: 10px 0;
-    `;
-    textArea.readOnly = true;
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '关闭';
-    closeBtn.onclick = () => {
-      document.body.removeChild(modal);
-      URL.revokeObjectURL(url);
-    };
-    closeBtn.style.cssText = `
-      margin-top: 10px;
-      padding: 8px 16px;
-      background: #6c757d;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    `;
-    
-    content.appendChild(textArea);
-    content.appendChild(closeBtn);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-    
-    // 绑定按钮事件
-    document.getElementById('download-btn').onclick = () => {
-      downloadLink.click();
-      syncStatus.textContent = '文件已下载，请上传到 GitHub';
+    // 方法1：直接更新 todo.json 文件
+    try {
+      await updateTodoFile(dataStr);
+      syncStatus.textContent = '同步成功！数据已更新到 GitHub';
       syncStatus.style.color = '#28a745';
-    };
+      return;
+    } catch (error) {
+      console.warn('直接更新失败，尝试触发 Action:', error);
+    }
     
-    document.getElementById('copy-btn').onclick = async () => {
-      try {
-        await navigator.clipboard.writeText(dataStr);
-        syncStatus.textContent = '数据已复制到剪贴板';
-        syncStatus.style.color = '#28a745';
-      } catch (error) {
-        // 降级方案
-        textArea.select();
-        document.execCommand('copy');
-        syncStatus.textContent = '数据已复制到剪贴板';
-        syncStatus.style.color = '#28a745';
-      }
-    };
+    // 方法2：触发 GitHub Action
+    try {
+      await triggerGitHubAction(dataStr);
+      syncStatus.textContent = '同步成功！GitHub Action 已触发';
+      syncStatus.style.color = '#28a745';
+      return;
+    } catch (error) {
+      console.warn('触发 Action 失败:', error);
+    }
+    
+    // 方法3：降级到手动同步
+    showManualSyncDialog(dataStr, syncStatus);
     
   } catch (error) {
     console.error('同步失败:', error);
@@ -539,6 +451,201 @@ async function syncToGitHub() {
       syncStatus.textContent = '';
     }, 5000);
   }
+}
+
+// 直接更新 todo.json 文件
+async function updateTodoFile(content) {
+  const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/todo.json`;
+  
+  // 首先获取文件的 SHA
+  const getResponse = await fetch(url, {
+    headers: {
+      'Authorization': `token ${GITHUB_CONFIG.token}`,
+      'Accept': 'application/vnd.github.v3+json'
+    }
+  });
+  
+  if (!getResponse.ok) {
+    throw new Error('无法获取文件信息');
+  }
+  
+  const fileInfo = await getResponse.json();
+  
+  // 更新文件
+  const updateResponse = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `token ${GITHUB_CONFIG.token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github.v3+json'
+    },
+    body: JSON.stringify({
+      message: 'Auto-sync todo data from web app',
+      content: btoa(unescape(encodeURIComponent(content))), // Base64 编码
+      sha: fileInfo.sha
+    })
+  });
+  
+  if (!updateResponse.ok) {
+    const error = await updateResponse.json();
+    throw new Error(`更新失败: ${error.message}`);
+  }
+  
+  return await updateResponse.json();
+}
+
+// 触发 GitHub Action
+async function triggerGitHubAction(content) {
+  const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/dispatches`;
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `token ${GITHUB_CONFIG.token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github.v3+json'
+    },
+    body: JSON.stringify({
+      event_type: 'sync-todo',
+      client_payload: {
+        todo_data: content
+      }
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`触发 Action 失败: ${error.message}`);
+  }
+  
+  return response;
+}
+
+// 显示手动同步对话框
+function showManualSyncDialog(dataStr, syncStatus) {
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const downloadLink = document.createElement('a');
+  downloadLink.href = url;
+  downloadLink.download = 'todo.json';
+  downloadLink.style.display = 'none';
+  document.body.appendChild(downloadLink);
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  `;
+  
+  const content = document.createElement('div');
+  content.style.cssText = `
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+  `;
+  
+  content.innerHTML = `
+    <h3>自动同步失败，请手动同步</h3>
+    <p>请选择以下任一方式同步数据：</p>
+    <div style="margin: 15px 0;">
+      <button id="download-btn" style="
+        padding: 10px 20px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      ">📥 下载 todo.json</button>
+      <button id="copy-btn" style="
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      ">📋 复制数据</button>
+    </div>
+    <div style="margin: 15px 0;">
+      <h4>同步步骤：</h4>
+      <ol>
+        <li>下载或复制数据</li>
+        <li>打开 GitHub 仓库</li>
+        <li>编辑 todo.json 文件</li>
+        <li>粘贴数据并保存</li>
+        <li>GitHub Action 会自动触发同步</li>
+      </ol>
+    </div>
+    <p><strong>数据预览：</strong></p>
+  `;
+  
+  const textArea = document.createElement('textarea');
+  textArea.value = dataStr;
+  textArea.style.cssText = `
+    width: 100%;
+    height: 200px;
+    font-family: monospace;
+    font-size: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px;
+    margin: 10px 0;
+  `;
+  textArea.readOnly = true;
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '关闭';
+  closeBtn.onclick = () => {
+    document.body.removeChild(modal);
+    URL.revokeObjectURL(url);
+  };
+  closeBtn.style.cssText = `
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  `;
+  
+  content.appendChild(textArea);
+  content.appendChild(closeBtn);
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+  
+  // 绑定按钮事件
+  document.getElementById('download-btn').onclick = () => {
+    downloadLink.click();
+    syncStatus.textContent = '文件已下载，请上传到 GitHub';
+    syncStatus.style.color = '#28a745';
+  };
+  
+  document.getElementById('copy-btn').onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(dataStr);
+      syncStatus.textContent = '数据已复制到剪贴板';
+      syncStatus.style.color = '#28a745';
+    } catch (error) {
+      // 降级方案
+      textArea.select();
+      document.execCommand('copy');
+      syncStatus.textContent = '数据已复制到剪贴板';
+      syncStatus.style.color = '#28a745';
+    }
+  };
 }
 
 // 初始化应用

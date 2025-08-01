@@ -37,20 +37,32 @@
 
 ## GitHub 同步功能
 
-### 自动同步
+### 方式一：自动同步（需要配置 Token）
 
-1. 在应用中点击"同步到 GitHub"按钮
-2. 数据会自动保存到 `todo.json` 文件
-3. GitHub Action 会自动触发并提交更改
+1. 按照 `GITHUB_SETUP.md` 中的说明配置 GitHub Token
+2. 在应用中点击"同步到 GitHub"按钮
+3. 系统会自动：
+   - 直接更新 `todo.json` 文件
+   - 或触发 GitHub Action 进行同步
 
-### 手动同步
+### 方式二：手动同步
 
 如果自动同步不可用，可以手动同步：
 
 1. 点击"同步到 GitHub"按钮
-2. 在弹出的对话框中复制数据
+2. 在弹出的对话框中选择：
+   - **下载 todo.json**：下载文件到本地
+   - **复制数据**：复制数据到剪贴板
 3. 在 GitHub 仓库中编辑 `todo.json` 文件
 4. 粘贴数据并保存
+5. GitHub Action 会自动触发并同步数据
+
+### 安全说明
+
+⚠️ **注意**：自动同步功能需要将 GitHub Token 暴露在前端代码中，存在安全风险。建议：
+- 使用私有仓库
+- 定期更换 Token
+- 或使用手动同步方式
 
 ## 文件结构
 
@@ -60,6 +72,9 @@ MyTodoList/
 ├── main.js             # 主要逻辑
 ├── style.css           # 样式文件
 ├── todo.json           # 数据文件
+├── README.md           # 项目说明
+├── USAGE.md            # 使用说明
+├── GITHUB_SETUP.md     # GitHub Token 配置说明
 └── .github/
     └── workflows/
         └── sync-todo.yml  # GitHub Action 配置
