@@ -9,7 +9,25 @@ let currentTab = 'active'; // active | completed
 const COLLAPSE_KEY = 'my_todo_collapse';
 let collapseState = {};
 
-function loadTodos() {
+// 从 todo.json 加载数据
+async function loadTodosFromJson() {
+  try {
+    const response = await fetch('todo.json');
+    if (response.ok) {
+      const data = await response.json();
+      todos = data;
+      // 同时保存到 localStorage 作为备份
+      localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todos));
+      return true;
+    }
+  } catch (error) {
+    console.error('从 todo.json 加载数据失败:', error);
+  }
+  return false;
+}
+
+// 从 localStorage 加载数据（备用方案）
+function loadTodosFromLocalStorage() {
   const data = localStorage.getItem(TODO_STORAGE_KEY);
   if (data) {
     todos = JSON.parse(data);
@@ -18,7 +36,16 @@ function loadTodos() {
   }
 }
 
+async function loadTodos() {
+  // 优先从 todo.json 加载，失败则从 localStorage 加载
+  const success = await loadTodosFromJson();
+  if (!success) {
+    loadTodosFromLocalStorage();
+  }
+}
+
 function saveTodos() {
+  // 保存到 localStorage
   localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todos));
 }
 
@@ -356,16 +383,182 @@ function setupTabs() {
   };
 }
 
-// 同步到 GitHub（预留）
-document.addEventListener('DOMContentLoaded', () => {
-  loadTodos();
+// 同步到 GitHub
+async function syncToGitHub() {
+  const syncBtn = document.getElementById('sync-btn');
+  const syncStatus = document.getElementById('sync-status');
+  
+  try {
+    syncBtn.disabled = true;
+    syncBtn.textContent = '同步中...';
+    syncStatus.textContent = '正在同步数据到 GitHub...';
+    syncStatus.style.color = '#007bff';
+    
+    // 保存到 localStorage
+    saveTodos();
+    
+    // 使用 GitHub API 推送数据
+    const dataStr = JSON.stringify(todos, null, 2);
+    
+    // 创建下载链接，让用户手动下载并上传到 GitHub
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const downloadLink = document.createElement('a');
+    downloadLink.href = url;
+    downloadLink.download = 'todo.json';
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    
+    // 显示同步对话框
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 90%;
+      max-height: 90%;
+      overflow: auto;
+    `;
+    
+    content.innerHTML = `
+      <h3>同步到 GitHub</h3>
+      <p>请选择以下任一方式同步数据：</p>
+      <div style="margin: 15px 0;">
+        <button id="download-btn" style="
+          padding: 10px 20px;
+          background: #28a745;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          margin-right: 10px;
+        ">📥 下载 todo.json</button>
+        <button id="copy-btn" style="
+          padding: 10px 20px;
+          background: #007bff;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        ">📋 复制数据</button>
+      </div>
+      <div style="margin: 15px 0;">
+        <h4>同步步骤：</h4>
+        <ol>
+          <li>下载或复制数据</li>
+          <li>打开 GitHub 仓库</li>
+          <li>编辑 todo.json 文件</li>
+          <li>粘贴数据并保存</li>
+          <li>GitHub Action 会自动触发同步</li>
+        </ol>
+      </div>
+      <p><strong>数据预览：</strong></p>
+    `;
+    
+    const textArea = document.createElement('textarea');
+    textArea.value = dataStr;
+    textArea.style.cssText = `
+      width: 100%;
+      height: 200px;
+      font-family: monospace;
+      font-size: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 8px;
+      margin: 10px 0;
+    `;
+    textArea.readOnly = true;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '关闭';
+    closeBtn.onclick = () => {
+      document.body.removeChild(modal);
+      URL.revokeObjectURL(url);
+    };
+    closeBtn.style.cssText = `
+      margin-top: 10px;
+      padding: 8px 16px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    `;
+    
+    content.appendChild(textArea);
+    content.appendChild(closeBtn);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    // 绑定按钮事件
+    document.getElementById('download-btn').onclick = () => {
+      downloadLink.click();
+      syncStatus.textContent = '文件已下载，请上传到 GitHub';
+      syncStatus.style.color = '#28a745';
+    };
+    
+    document.getElementById('copy-btn').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(dataStr);
+        syncStatus.textContent = '数据已复制到剪贴板';
+        syncStatus.style.color = '#28a745';
+      } catch (error) {
+        // 降级方案
+        textArea.select();
+        document.execCommand('copy');
+        syncStatus.textContent = '数据已复制到剪贴板';
+        syncStatus.style.color = '#28a745';
+      }
+    };
+    
+  } catch (error) {
+    console.error('同步失败:', error);
+    syncStatus.textContent = '同步失败: ' + error.message;
+    syncStatus.style.color = '#dc3545';
+  } finally {
+    syncBtn.disabled = false;
+    syncBtn.textContent = '同步到 GitHub';
+    
+    // 5秒后清除状态信息
+    setTimeout(() => {
+      syncStatus.textContent = '';
+    }, 5000);
+  }
+}
+
+// 初始化应用
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadTodos();
   loadCollapseState();
   setupAddTodo();
   setupTabs();
   render();
-  document.getElementById('sync-btn').onclick = () => {
-    alert('同步到 GitHub 功能开发中，当前仅本地保存。');
-  };
+  
+  // 设置同步按钮
+  document.getElementById('sync-btn').onclick = syncToGitHub;
+  
+  // 显示加载状态
+  const syncStatus = document.getElementById('sync-status');
+  syncStatus.textContent = '数据加载完成';
+  syncStatus.style.color = '#28a745';
+  setTimeout(() => {
+    syncStatus.textContent = '';
+  }, 2000);
 });
 
 function showAddChildForm(todo, item, level) {

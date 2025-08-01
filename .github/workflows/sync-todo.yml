@@ -1,0 +1,56 @@
+name: Sync Todo Data
+
+on:
+  push:
+    paths:
+      - 'todo.json'
+    branches:
+      - main
+  workflow_dispatch:
+  repository_dispatch:
+    types: [sync-todo]
+
+jobs:
+  sync-todo:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Validate JSON
+      run: |
+        if [ -f todo.json ]; then
+          node -e "JSON.parse(require('fs').readFileSync('todo.json', 'utf8')); console.log('JSON is valid');"
+        else
+          echo "todo.json not found, creating empty array"
+          echo "[]" > todo.json
+        fi
+        
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add todo.json
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Auto-sync todo data [skip ci]"
+          git push
+        fi
+        
+    - name: Create release
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        echo "Creating release for todo data backup"
+        gh release create "todo-backup-$(date +%Y%m%d-%H%M%S)" \
+          --title "Todo Data Backup $(date +%Y-%m-%d)" \
+          --notes "Automatic backup of todo data" \
+          todo.json 
