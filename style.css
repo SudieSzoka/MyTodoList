@@ -4,6 +4,7 @@ body {
   color: #222;
   margin: 0;
   padding: 0;
+  -webkit-overflow-scrolling: touch; /* iOS滚动优化 */
 }
 .container {
   max-width: 900px;
@@ -344,4 +345,280 @@ header h1 {
   font-size: 0.9em;
   margin-top: 8px;
   min-height: 1.2em;
+}
+
+/* 横屏模式优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .container {
+    padding: 8px 12px 8px 12px;
+  }
+  
+  header h1 {
+    font-size: 1.2em;
+    margin-bottom: 8px;
+  }
+  
+  .github-config {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .token-input-group {
+    min-width: 150px;
+  }
+  
+  #add-todo {
+    flex-direction: row;
+    gap: 8px;
+  }
+  
+  #add-todo input, #add-todo select {
+    flex: 1;
+  }
+  
+  #add-todo-btn {
+    flex-shrink: 0;
+  }
+}
+
+/* 手机端响应式设计 */
+@media (max-width: 768px) {
+  /* 确保触摸友好的最小尺寸 */
+  button, input, select {
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* 增加触摸区域 */
+  .todo-actions button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .container {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    padding: 16px 12px 12px 12px;
+    box-shadow: none;
+  }
+  
+  header h1 {
+    font-size: 1.5em;
+    margin-bottom: 16px;
+  }
+  
+  /* GitHub 配置区域在手机端垂直排列 */
+  .github-config {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .token-input-group {
+    min-width: auto;
+  }
+  
+  #sync-btn {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 1.1em;
+  }
+  
+  /* 标签页在手机端调整 */
+  .tabs {
+    margin-bottom: 16px;
+  }
+  
+  .tab {
+    padding: 8px 20px;
+    margin: 0 4px;
+    font-size: 1em;
+  }
+  
+  /* 添加任务区域在手机端垂直排列 */
+  #add-todo {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  
+  #add-todo input, #add-todo select {
+    padding: 10px 12px;
+    font-size: 1em;
+  }
+  
+  #add-todo-btn {
+    padding: 12px 20px;
+    font-size: 1.1em;
+  }
+  
+  /* 待办事项卡片在手机端的布局调整 */
+  .todo-main {
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 12px;
+  }
+  
+  /* 标题和描述在手机端分2行显示 */
+  .todo-main .todo-title {
+    max-width: none;
+    white-space: normal;
+    word-break: break-word;
+    margin-right: 0;
+    display: block;
+    margin-bottom: 4px;
+  }
+  
+  .todo-main .todo-desc {
+    margin-left: 0;
+    margin-top: 0;
+    color: #6a7b8a;
+    font-size: 0.95em;
+    display: block;
+  }
+  
+  /* 时间信息在手机端右侧显示 */
+  .todo-time-info {
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    min-width: auto;
+    width: auto;
+    font-size: 0.85em;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    margin-left: 0;
+    margin-bottom: 0;
+  }
+  
+  /* 操作按钮在手机端横排显示在时间下方 */
+  .todo-actions {
+    flex-direction: row;
+    justify-content: center;
+    gap: 8px;
+    margin-left: 0;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e3eaf1;
+  }
+  
+  .todo-actions > div {
+    gap: 8px;
+  }
+  
+  .todo-actions button {
+    font-size: 1.2em;
+    padding: 8px 12px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  /* 子任务在手机端的缩进调整 */
+  .todo-children {
+    margin-left: 16px;
+  }
+  
+  .todo-form-container {
+    margin-left: 16px;
+  }
+  
+  /* 内联表单在手机端垂直排列 */
+  .inline-form {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .inline-form input, .inline-form select {
+    padding: 8px 10px;
+    font-size: 1em;
+  }
+  
+  .inline-form button {
+    padding: 8px 12px;
+    font-size: 1em;
+  }
+  
+  /* 统计信息在手机端调整 */
+  #todo-stats {
+    font-size: 0.9em;
+    margin-bottom: 8px;
+  }
+  
+  /* 手机端字体大小优化 */
+  body {
+    font-size: 16px; /* 防止iOS缩放 */
+  }
+  
+  /* 手机端滚动优化 */
+  .todo-item {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  /* 手机端标题行优化 */
+  .todo-main > div:first-child {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
+  /* 手机端优先级图标优化 */
+  .todo-main .todo-title {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  /* 手机端按钮反馈优化 */
+  .todo-actions button:active {
+    background: #cce7ff;
+    transform: scale(0.95);
+  }
+  
+  #add-todo-btn:active {
+    background: #0d3d6b;
+    transform: scale(0.98);
+  }
+  
+  .tab:active {
+    background: #d1e7f0;
+  }
+}
+
+/* 超小屏幕设备的额外优化 */
+@media (max-width: 480px) {
+  .container {
+    padding: 12px 8px 8px 8px;
+  }
+  
+  header h1 {
+    font-size: 1.3em;
+    margin-bottom: 12px;
+  }
+  
+  .tab {
+    padding: 6px 16px;
+    font-size: 0.9em;
+  }
+  
+  .todo-main {
+    padding: 10px 6px;
+  }
+  
+  .todo-actions button {
+    font-size: 1.1em;
+    padding: 4px 6px;
+  }
+  
+  .todo-time-info {
+    font-size: 0.8em;
+  }
+  
+  /* 在超小屏幕上隐藏一些次要信息 */
+  .created-time {
+    display: none;
+  }
 }

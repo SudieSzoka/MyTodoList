@@ -103,6 +103,9 @@ function filterTodosByTab(todos, tab) {
 }
 
 function renderTodoItem(todo, level = 1, parent = null) {
+  // 检测是否为手机端
+  const isMobile = window.innerWidth <= 768;
+  
   const item = document.createElement('div');
   item.className = 'todo-item' + (todo.completedAt ? ' completed' : '');
   item.dataset.priority = todo.priority;
@@ -147,10 +150,11 @@ function renderTodoItem(todo, level = 1, parent = null) {
   infoDiv.style.display = 'flex';
   infoDiv.style.flexDirection = 'column';
 
-  // 第一行：标题
+  // 第一行：标题和描述
   const titleRow = document.createElement('div');
   titleRow.style.display = 'flex';
   titleRow.style.alignItems = 'center';
+  titleRow.style.flexWrap = 'wrap';
   titleRow.appendChild(collapseBtn);
   titleRow.appendChild(priorityIcon);
   const title = document.createElement('span');
@@ -158,14 +162,25 @@ function renderTodoItem(todo, level = 1, parent = null) {
   title.style.marginRight = '10px';
   title.textContent = todo.title;
   titleRow.appendChild(title);
-  infoDiv.appendChild(titleRow);
-
-  // 第二行：备注（即使为空也保留）
-  const descRow = document.createElement('div');
-  descRow.className = 'todo-desc';
-  descRow.textContent = todo.desc || '';
-  descRow.style.minHeight = '1.2em';
-  infoDiv.appendChild(descRow);
+  
+  // 如果有描述，在手机端分2行显示，桌面端在同一行显示
+  if (todo.desc && todo.desc.trim()) {
+    const descSpan = document.createElement('span');
+    descSpan.className = 'todo-desc';
+    if (isMobile) {
+      // 手机端：描述单独一行
+      descSpan.textContent = todo.desc;
+      infoDiv.appendChild(titleRow);
+      infoDiv.appendChild(descSpan);
+    } else {
+      // 桌面端：描述在同一行
+      descSpan.textContent = ` - ${todo.desc}`;
+      titleRow.appendChild(descSpan);
+      infoDiv.appendChild(titleRow);
+    }
+  } else {
+    infoDiv.appendChild(titleRow);
+  }
 
   // 右侧时间信息
   const timeDiv = document.createElement('div');
@@ -176,8 +191,10 @@ function renderTodoItem(todo, level = 1, parent = null) {
   timeDiv.style.justifyContent = 'flex-start';
   timeDiv.style.marginLeft = 'auto';
   const createdSpan = document.createElement('span');
+  createdSpan.className = 'created-time';
   createdSpan.textContent = `创建: ${formatDate(todo.createdAt)}`;
   const durationSpan = document.createElement('span');
+  durationSpan.className = 'duration-time';
   durationSpan.textContent = todo.completedAt
     ? `总用时: ${formatDuration(todo.completedAt - todo.createdAt)}`
     : `已持续: ${formatDuration(Date.now() - todo.createdAt)}`;
@@ -185,57 +202,132 @@ function renderTodoItem(todo, level = 1, parent = null) {
   timeDiv.appendChild(durationSpan);
 
   mainContent.appendChild(infoDiv);
-  mainContent.appendChild(timeDiv);
-
-  // 操作按钮分两行
+  
+  // 在手机端，时间信息和操作按钮都放在TODO内容下方
+  if (!isMobile) {
+    // 桌面端：时间信息在右侧
+    mainContent.appendChild(timeDiv);
+  }
+  
+  // 操作按钮
   const actions = document.createElement('div');
   actions.className = 'todo-actions';
-  actions.style.display = 'flex';
-  actions.style.flexDirection = 'column';
-  actions.style.gap = '4px';
-  actions.style.marginLeft = '8px';
-
-  const rowA = document.createElement('div');
-  rowA.style.display = 'flex';
-  rowA.style.gap = '4px';
-  if (!todo.completedAt) {
-    const completeBtn = document.createElement('button');
-    completeBtn.title = '完成';
-    completeBtn.innerHTML = '✅';
-    completeBtn.onclick = () => completeTodo(todo.id);
-    rowA.appendChild(completeBtn);
+  if (isMobile) {
+    // 手机端：横排显示
+    actions.style.display = 'flex';
+    actions.style.flexDirection = 'row';
+    actions.style.gap = '8px';
+    actions.style.marginLeft = '0';
   } else {
-    const restoreBtn = document.createElement('button');
-    restoreBtn.title = '恢复';
-    restoreBtn.innerHTML = '↩️';
-    restoreBtn.onclick = () => restoreTodo(todo.id);
-    rowA.appendChild(restoreBtn);
+    // 桌面端：竖排显示
+    actions.style.display = 'flex';
+    actions.style.flexDirection = 'column';
+    actions.style.gap = '4px';
+    actions.style.marginLeft = '8px';
   }
-  const addChildBtn = document.createElement('button');
-  addChildBtn.title = '添加子任务';
-  addChildBtn.innerHTML = '➕';
-  addChildBtn.onclick = () => showAddChildForm(todo, item, level);
-  if (level < 3 && !todo.completedAt) rowA.appendChild(addChildBtn);
 
-  const rowB = document.createElement('div');
-  rowB.style.display = 'flex';
-  rowB.style.gap = '4px';
-  const editBtn = document.createElement('button');
-  editBtn.title = '编辑';
-  editBtn.innerHTML = '✏️';
-  editBtn.onclick = () => showEditForm(todo, item);
-  if (!todo.completedAt) rowB.appendChild(editBtn);
-  const delBtn = document.createElement('button');
-  delBtn.title = '删除';
-  delBtn.innerHTML = '🗑️';
-  delBtn.onclick = () => { if (confirm('确认删除此任务吗？')) deleteTodo(todo.id); };
-  rowB.appendChild(delBtn);
+  if (isMobile) {
+    // 手机端：所有按钮横排
+    if (!todo.completedAt) {
+      const completeBtn = document.createElement('button');
+      completeBtn.title = '完成';
+      completeBtn.innerHTML = '✅';
+      completeBtn.onclick = () => completeTodo(todo.id);
+      actions.appendChild(completeBtn);
+    } else {
+      const restoreBtn = document.createElement('button');
+      restoreBtn.title = '恢复';
+      restoreBtn.innerHTML = '↩️';
+      restoreBtn.onclick = () => restoreTodo(todo.id);
+      actions.appendChild(restoreBtn);
+    }
+    
+    const addChildBtn = document.createElement('button');
+    addChildBtn.title = '添加子任务';
+    addChildBtn.innerHTML = '➕';
+    addChildBtn.onclick = () => showAddChildForm(todo, item, level);
+    if (level < 3 && !todo.completedAt) actions.appendChild(addChildBtn);
+    
+    const editBtn = document.createElement('button');
+    editBtn.title = '编辑';
+    editBtn.innerHTML = '✏️';
+    editBtn.onclick = () => showEditForm(todo, item);
+    if (!todo.completedAt) actions.appendChild(editBtn);
+    
+    const delBtn = document.createElement('button');
+    delBtn.title = '删除';
+    delBtn.innerHTML = '🗑️';
+    delBtn.onclick = () => { if (confirm('确认删除此任务吗？')) deleteTodo(todo.id); };
+    actions.appendChild(delBtn);
+  } else {
+    // 桌面端：按钮分两行
+    const rowA = document.createElement('div');
+    rowA.style.display = 'flex';
+    rowA.style.gap = '4px';
+    if (!todo.completedAt) {
+      const completeBtn = document.createElement('button');
+      completeBtn.title = '完成';
+      completeBtn.innerHTML = '✅';
+      completeBtn.onclick = () => completeTodo(todo.id);
+      rowA.appendChild(completeBtn);
+    } else {
+      const restoreBtn = document.createElement('button');
+      restoreBtn.title = '恢复';
+      restoreBtn.innerHTML = '↩️';
+      restoreBtn.onclick = () => restoreTodo(todo.id);
+      rowA.appendChild(restoreBtn);
+    }
+    const addChildBtn = document.createElement('button');
+    addChildBtn.title = '添加子任务';
+    addChildBtn.innerHTML = '➕';
+    addChildBtn.onclick = () => showAddChildForm(todo, item, level);
+    if (level < 3 && !todo.completedAt) rowA.appendChild(addChildBtn);
 
-  actions.appendChild(rowA);
-  actions.appendChild(rowB);
-  mainContent.appendChild(actions);
+    const rowB = document.createElement('div');
+    rowB.style.display = 'flex';
+    rowB.style.gap = '4px';
+    const editBtn = document.createElement('button');
+    editBtn.title = '编辑';
+    editBtn.innerHTML = '✏️';
+    editBtn.onclick = () => showEditForm(todo, item);
+    if (!todo.completedAt) rowB.appendChild(editBtn);
+    const delBtn = document.createElement('button');
+    delBtn.title = '删除';
+    delBtn.innerHTML = '🗑️';
+    delBtn.onclick = () => { if (confirm('确认删除此任务吗？')) deleteTodo(todo.id); };
+    rowB.appendChild(delBtn);
+
+    actions.appendChild(rowA);
+    actions.appendChild(rowB);
+  }
+  
+  if (!isMobile) {
+    // 桌面端：操作按钮在右侧
+    mainContent.appendChild(actions);
+  }
 
   item.appendChild(mainContent);
+  
+  // 手机端：时间信息和操作按钮分两行显示
+  if (isMobile) {
+    // 时间信息单独一行
+    const timeRow = document.createElement('div');
+    timeRow.style.display = 'flex';
+    timeRow.style.justifyContent = 'flex-end';
+    timeRow.style.marginTop = '8px';
+    timeRow.style.paddingTop = '8px';
+    timeRow.style.borderTop = '1px solid #e3eaf1';
+    timeRow.appendChild(timeDiv);
+    item.appendChild(timeRow);
+    
+    // 操作按钮单独一行，横排居中
+    const actionsRow = document.createElement('div');
+    actionsRow.style.display = 'flex';
+    actionsRow.style.justifyContent = 'center';
+    actionsRow.style.marginTop = '8px';
+    actionsRow.appendChild(actions);
+    item.appendChild(actionsRow);
+  }
 
   // 创建子任务容器
   const childrenContainer = document.createElement('div');
