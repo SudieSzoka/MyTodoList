@@ -88,5 +88,15 @@
     "completedAt": null,
     "children": [],
     "level": 1
+  },
+  {
+    "id": "tc2zplhak1754474551046",
+    "title": "插件：自动获取浏览器记录",
+    "desc": "生成内容",
+    "priority": "medium",
+    "createdAt": 1754474551046,
+    "completedAt": null,
+    "children": [],
+    "level": 1
   }
 ]
