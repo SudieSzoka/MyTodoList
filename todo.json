@@ -102,10 +102,10 @@
   {
     "id": "tei6fn63n1754797097124",
     "title": "每日喂奶加设置",
-    "desc": "名字、webhook、可视链接",
+    "desc": "名字、webhook",
     "priority": "medium",
     "createdAt": 1754797097124,
-    "completedAt": null,
+    "completedAt": 1755032483083,
     "children": [],
     "level": 1
   },
