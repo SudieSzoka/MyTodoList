@@ -185,7 +185,7 @@
     "desc": "",
     "priority": "medium",
     "createdAt": 1755282684926,
-    "completedAt": null,
+    "completedAt": 1758702575014,
     "children": [],
     "level": 1
   },
@@ -225,7 +225,7 @@
     "desc": "1.按排名排序；2.正确计算排名",
     "priority": "medium",
     "createdAt": 1757906965673,
-    "completedAt": null,
+    "completedAt": 1758702570847,
     "children": [],
     "level": 1
   }
