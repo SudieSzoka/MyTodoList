@@ -65,7 +65,7 @@
     "desc": "",
     "priority": "high",
     "createdAt": 1754307271485,
-    "completedAt": null,
+    "completedAt": 1758789664928,
     "children": [],
     "level": 1
   },
@@ -95,7 +95,7 @@
     "desc": "生成内容",
     "priority": "medium",
     "createdAt": 1754474551046,
-    "completedAt": null,
+    "completedAt": 1758789660706,
     "children": [],
     "level": 1
   },
