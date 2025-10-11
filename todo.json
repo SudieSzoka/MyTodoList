@@ -228,5 +228,15 @@
     "completedAt": 1758702570847,
     "children": [],
     "level": 1
+  },
+  {
+    "id": "t43z16q2x1760222277501",
+    "title": "AI根据",
+    "desc": "1.图片叠加的，提供透明背景；2.颜色替换的，提供近似颜色聚合；3.新增修改透明度工具",
+    "priority": "medium",
+    "createdAt": 1760222277501,
+    "completedAt": null,
+    "children": [],
+    "level": 1
   }
 ]
