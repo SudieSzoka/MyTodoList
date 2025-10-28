@@ -252,10 +252,10 @@
   {
     "id": "tb1au74j51761471022801",
     "title": "关卡编辑器",
-    "desc": "",
+    "desc": "备：任务取消，使用PS",
     "priority": "medium",
     "createdAt": 1761471022801,
-    "completedAt": null,
+    "completedAt": 1761620254722,
     "children": [],
     "level": 1
   }
